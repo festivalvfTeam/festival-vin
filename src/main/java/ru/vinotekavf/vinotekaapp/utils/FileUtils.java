@@ -6,9 +6,12 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ru.vinotekavf.vinotekaapp.entities.Position;
 import ru.vinotekavf.vinotekaapp.entities.Provider;
 import ru.vinotekavf.vinotekaapp.enums.ExcelColumns;
+import ru.vinotekavf.vinotekaapp.services.StorageService;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,7 +27,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.poi.ss.usermodel.Cell.*;
 
 public class FileUtils {
-    public static XSSFCell getValuableXSSFCellFromMerged (XSSFSheet sheet, XSSFCell cell) {
+
+    public static XSSFCell getValuableXSSFCellFromMerged(XSSFSheet sheet, XSSFCell cell) {
         for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
             CellRangeAddress region = sheet.getMergedRegion(i); //Region of merged cells
             if (region.isInRange(cell.getRowIndex(), cell.getColumnIndex())) {
@@ -34,7 +38,7 @@ public class FileUtils {
         return cell;
     }
 
-    public static HSSFCell getValuableHSSFCellFromMerged (HSSFSheet sheet, HSSFCell cell) {
+    public static HSSFCell getValuableHSSFCellFromMerged(HSSFSheet sheet, HSSFCell cell) {
         for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
             CellRangeAddress region = sheet.getMergedRegion(i); //Region of merged cells
             if (region.isInRange(cell.getRowIndex(), cell.getColumnIndex())) {
@@ -53,7 +57,7 @@ public class FileUtils {
                 if (isNotEmpty(cell)) {
                     XSSFCell cellWithValue = getValuableXSSFCellFromMerged(row.getSheet(), cell);
                     if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_STRING) {
-                        return cellWithValue.getStringCellValue().replaceAll("\\s+"," ");
+                        return cellWithValue.getStringCellValue().replaceAll("\\s+", " ");
                     } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_NUMERIC) {
                         return BigDecimal.valueOf(cellWithValue.getNumericCellValue()).stripTrailingZeros().toPlainString();
                     } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_FORMULA) {
@@ -83,7 +87,7 @@ public class FileUtils {
                 if (isNotEmpty(cell)) {
                     HSSFCell cellWithValue = getValuableHSSFCellFromMerged(row.getSheet(), cell);
                     if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_STRING) {
-                        return cellWithValue.getStringCellValue().replaceAll("\\s+"," ");
+                        return cellWithValue.getStringCellValue().replaceAll("\\s+", " ");
                     } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_NUMERIC) {
                         return BigDecimal.valueOf(cellWithValue.getNumericCellValue()).stripTrailingZeros().toPlainString();
                     } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_FORMULA) {
@@ -104,8 +108,8 @@ public class FileUtils {
         return "";
     }
 
-    public static void writeAllToXLSXFile(List<Provider> providers, String uploadPath) throws IOException {
-        File file = new File(uploadPath + "/Common price.xlsx");
+    public File writeAllToXLSXFile(List<Provider> providers) throws IOException {
+        File file = new File("files/Common price.xlsx");
         file.getParentFile().mkdirs();
 
         XSSFWorkbook book = new XSSFWorkbook();
@@ -116,11 +120,12 @@ public class FileUtils {
             book.write(outputStream);
             book.close();
         }
+        return file;
     }
 
-    public static void writeSingleToXLSXFile(Provider provider, String uploadPath) throws IOException {
+    public File writeSingleToXLSXFile(Provider provider) throws IOException {
         Transliterator toLatinTrans = Transliterator.getInstance("Cyrillic-Latin");
-        File file = new File(uploadPath + "/" + toLatinTrans.transliterate(provider.getName()) + ".xlsx");
+        File file = new File( "files/" + toLatinTrans.transliterate(provider.getName()) + ".xlsx");
         file.getParentFile().mkdirs();
 
         List<Provider> providers = new ArrayList<>();
@@ -133,6 +138,7 @@ public class FileUtils {
             book.write(outputStream);
             book.close();
         }
+        return file;
     }
 
     private static XSSFSheet createXSSFSheet(XSSFWorkbook workbook) {

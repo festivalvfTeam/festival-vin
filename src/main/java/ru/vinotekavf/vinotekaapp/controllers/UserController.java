@@ -21,6 +21,7 @@ import ru.vinotekavf.vinotekaapp.entities.User;
 import ru.vinotekavf.vinotekaapp.enums.Role;
 import ru.vinotekavf.vinotekaapp.services.PositionService;
 import ru.vinotekavf.vinotekaapp.services.ProviderService;
+import ru.vinotekavf.vinotekaapp.services.StorageService;
 import ru.vinotekavf.vinotekaapp.services.UserService;
 import ru.vinotekavf.vinotekaapp.utils.ControllerUtils;
 import ru.vinotekavf.vinotekaapp.utils.FileUtils;
@@ -28,6 +29,7 @@ import ru.vinotekavf.vinotekaapp.utils.MediaTypeUtils;
 
 import javax.servlet.ServletContext;
 import javax.validation.Valid;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,6 +54,9 @@ public class UserController {
 
     @Autowired
     private ServletContext servletContext;
+
+    @Autowired
+    private StorageService storageService;
 
     @GetMapping("/login")
     public String login(){
@@ -111,17 +116,17 @@ public class UserController {
 
     @GetMapping("/getPrice")
     public ResponseEntity<ByteArrayResource> getPrice() throws IOException {
-        FileUtils.writeAllToXLSXFile(providerService.getAllActive(), uploadPath);
-
+        FileUtils fileUtils = new FileUtils();
+        File file = fileUtils.writeAllToXLSXFile(providerService.getAllActive());
+        storageService.uploadFile(file);
         MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, "Common price.xlsx");
 
-        Path path = Paths.get(uploadPath + "/Common price.xlsx");
-        byte[] data = Files.readAllBytes(path);
+        byte[] data = storageService.dowloadFile("Common price.xlsx");
         ByteArrayResource resource = new ByteArrayResource(data);
 
         return ResponseEntity.ok()
             // Content-Disposition
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + path.getFileName().toString())
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=Common price.xlsx")
             // Content-Type
             .contentType(mediaType) //
             // Content-Lengh
@@ -131,20 +136,20 @@ public class UserController {
 
     @GetMapping("/providers/download/{provider}")
     public ResponseEntity<ByteArrayResource> downloadProviderFile(@PathVariable Provider provider) throws IOException {
-
-        FileUtils.writeSingleToXLSXFile(providerService.getProviderById(provider.getId()), uploadPath);
+        FileUtils fileUtils = new FileUtils();
+        File file = fileUtils.writeSingleToXLSXFile(providerService.getProviderById(provider.getId()));
+        storageService.uploadFile(file);
 
         Transliterator toLatinTrans = Transliterator.getInstance("Cyrillic-Latin");
 
         MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext,toLatinTrans.transliterate(provider.getName()) + ".xlsx");
 
-        Path path = Paths.get(uploadPath + "/" + toLatinTrans.transliterate(provider.getName()) + ".xlsx");
-        byte[] data = Files.readAllBytes(path);
+        byte[] data = storageService.dowloadFile(toLatinTrans.transliterate(provider.getName()) + ".xlsx");
         ByteArrayResource resource = new ByteArrayResource(data);
 
         return ResponseEntity.ok()
             // Content-Disposition
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + path.getFileName().toString())
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + toLatinTrans.transliterate(provider.getName()) + ".xlsx")
             // Content-Type
             .contentType(mediaType) //
             // Content-Lengh

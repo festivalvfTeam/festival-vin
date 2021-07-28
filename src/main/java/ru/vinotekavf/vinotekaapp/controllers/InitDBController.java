@@ -1,5 +1,6 @@
 package ru.vinotekavf.vinotekaapp.controllers;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -15,6 +16,7 @@ import ru.vinotekavf.vinotekaapp.entities.Position;
 import ru.vinotekavf.vinotekaapp.entities.Provider;
 import ru.vinotekavf.vinotekaapp.services.PositionService;
 import ru.vinotekavf.vinotekaapp.services.ProviderService;
+import ru.vinotekavf.vinotekaapp.services.StorageService;
 import ru.vinotekavf.vinotekaapp.utils.ControllerUtils;
 import ru.vinotekavf.vinotekaapp.utils.FileUtils;
 
@@ -38,6 +40,9 @@ public class InitDBController {
     @Autowired
     PositionService positionService;
 
+    @Autowired
+    StorageService storageService;
+
     @PostMapping("testingMatch")
     public String matchTestFile(@RequestParam("file") MultipartFile file,
         @RequestParam("provider") String provider,
@@ -53,13 +58,14 @@ public class InitDBController {
         @RequestParam("maker") String maker,
         @RequestParam("fvVendorCode") String fvVendorCode,
         @RequestParam("fvProductName") String fvProductName
-    ) throws IOException {
+    ) throws IOException, InvalidFormatException {
 
         if (isNotEmpty(file.getOriginalFilename())) {
-            Path path = ControllerUtils.writeInDirectoryAndGetPath(file, uploadPath);
+            //Path path = ControllerUtils.writeInDirectoryAndGetPath(file, uploadPath);
 
             if (file.getOriginalFilename().contains("xlsx") || file.getOriginalFilename().contains("xlsm")) {
-                XSSFWorkbook book = new XSSFWorkbook(new FileInputStream(path.toString()));
+                //XSSFWorkbook book = new XSSFWorkbook(new FileInputStream(path.toString()));
+                XSSFWorkbook book = new XSSFWorkbook(storageService.uploadMultipartFile(file));
                 XSSFSheet sheet = book.getSheetAt(0);
                 Iterator<Row> rowIterator = sheet.rowIterator();
                 while (rowIterator.hasNext()) {
