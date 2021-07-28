@@ -11,6 +11,7 @@ import ru.vinotekavf.vinotekaapp.services.PositionService;
 import ru.vinotekavf.vinotekaapp.services.ProviderService;
 import ru.vinotekavf.vinotekaapp.utils.ControllerUtils;
 
+import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -121,6 +122,7 @@ public class ProviderController {
         return "disabledProviders";
     }
 
+    @Transactional
     @GetMapping("/delete/{provider}")
     public String deleteProvider(@PathVariable Provider provider) {
         providerService.delete(provider);

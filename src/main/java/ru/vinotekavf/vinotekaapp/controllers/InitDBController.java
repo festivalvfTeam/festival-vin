@@ -61,10 +61,8 @@ public class InitDBController {
     ) throws IOException, InvalidFormatException {
 
         if (isNotEmpty(file.getOriginalFilename())) {
-            //Path path = ControllerUtils.writeInDirectoryAndGetPath(file, uploadPath);
 
             if (file.getOriginalFilename().contains("xlsx") || file.getOriginalFilename().contains("xlsm")) {
-                //XSSFWorkbook book = new XSSFWorkbook(new FileInputStream(path.toString()));
                 XSSFWorkbook book = new XSSFWorkbook(storageService.uploadMultipartFile(file));
                 XSSFSheet sheet = book.getSheetAt(0);
                 Iterator<Row> rowIterator = sheet.rowIterator();
