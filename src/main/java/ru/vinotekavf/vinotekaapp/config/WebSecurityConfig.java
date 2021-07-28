@@ -17,8 +17,12 @@ import ru.vinotekavf.vinotekaapp.services.UserService;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
     private UserService userService;
+
+    @Autowired
+    private void setUserService(UserService userService){
+        this.userService = userService;
+    }
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
