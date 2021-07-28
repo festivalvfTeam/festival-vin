@@ -17,13 +17,6 @@ import ru.vinotekavf.vinotekaapp.services.UserService;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private UserService userService;
-
-    @Autowired
-    private void setUserService(UserService userService){
-        this.userService = userService;
-    }
-
     @Bean
     public PasswordEncoder getPasswordEncoder() {
         return new BCryptPasswordEncoder(8);
@@ -52,8 +45,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .csrf().disable();
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    @Autowired
+    protected void configure(AuthenticationManagerBuilder auth, UserService userService) throws Exception {
         auth.userDetailsService(userService)
             .passwordEncoder(passwordEncoder);
     }
