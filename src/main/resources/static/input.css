@@ -1,0 +1,14 @@
+.border-line {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #000000;
+    outline: none;
+    text-align: center;
+}
+
+.border-none {
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+}
