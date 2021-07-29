@@ -6,7 +6,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import ru.vinotekavf.vinotekaapp.entities.Provider;
 import ru.vinotekavf.vinotekaapp.services.PositionService;
+import ru.vinotekavf.vinotekaapp.services.ProviderService;
 
 @Controller
 public class PositionController {
@@ -14,10 +16,21 @@ public class PositionController {
     @Autowired
     private PositionService positionService;
 
+    @Autowired
+    private ProviderService providerService;
+
     @PostMapping("/positionSearchFilter")
-    public String positionSearch(@RequestParam("vendorCodeFilter") String vendorCodeFilter, Model model) {
-        model.addAttribute("positions", positionService.findByVendorCode(vendorCodeFilter));
+    public String positionSearch(@RequestParam("filter") String filter, Model model) {
+        model.addAttribute("positions", positionService.findByFilter(filter));
         return "searchPosition";
+    }
+
+    @PostMapping("/providerPositionSearchFilter")
+    public String providerPositionSearch(@RequestParam("filter") String filter, @RequestParam("providerId") Long providerId, Model model) {
+        Provider provider = providerService.getProviderById(providerId);
+        model.addAttribute("positions", positionService.findByFilterWithProvider(filter, provider));
+        model.addAttribute("provider", provider);
+        return "providerPositions";
     }
 
     @GetMapping("/positionSearch")

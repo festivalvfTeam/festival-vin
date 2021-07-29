@@ -30,4 +30,21 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
 
     @Query("from Position p where p.isActive = true order by p.provider.name, p.productName")
     List<Position> findAllByIsActiveTrueOrderByProviderAscProductNameAsc();
+
+    @Query("from Position p where LOWER(concat(p.vendorCode)) like LOWER(concat('%', :query, '%')) " +
+        "or LOWER(concat(p.productName)) like LOWER(concat('%', :query, '%')) " +
+        "or p.releaseYear = :query " +
+        "or LOWER(concat(p.maker)) like LOWER(concat('%', :query, '%')) " +
+        "or LOWER(concat(p.fvVendorCode)) like LOWER(concat('%', :query, '%')) " +
+        "or LOWER(concat(p.fvProductName)) like LOWER(concat('%', :query, '%')) ")
+    List<Position> findByQuery(String query);
+
+    @Query("from Position p where (LOWER(concat(p.vendorCode)) like LOWER(concat('%', :query, '%')) " +
+        "or LOWER(concat(p.productName)) like LOWER(concat('%', :query, '%')) " +
+        "or p.releaseYear = :query " +
+        "or LOWER(concat(p.maker)) like LOWER(concat('%', :query, '%')) " +
+        "or LOWER(concat(p.fvVendorCode)) like LOWER(concat('%', :query, '%')) " +
+        "or LOWER(concat(p.fvProductName)) like LOWER(concat('%', :query, '%'))) " +
+        "and p.provider = :provider")
+    List<Position> findByQueryAndProvider(String query, Provider provider);
 }

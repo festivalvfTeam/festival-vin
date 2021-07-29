@@ -20,7 +20,7 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
   <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
     <form th:action="@{/positionSearchFilter}" method="post" class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
-      <input name="vendorCodeFilter" type="search" class="form-control form-control-dark mt-3" placeholder="Поиск по артикулу" aria-label="Search">
+      <input name="filter" type="search" class="form-control form-control-dark mt-3" placeholder="Поиск" aria-label="Search">
     </form>
     <a class="btn btn-primary mt-3" role="button" th:href="@{/positionSearch}">Весь список</a>
   </div>

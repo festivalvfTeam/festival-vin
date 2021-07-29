@@ -9,12 +9,11 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.vinotekavf.vinotekaapp.entities.Provider;
 import ru.vinotekavf.vinotekaapp.services.PositionService;
 import ru.vinotekavf.vinotekaapp.services.ProviderService;
+import ru.vinotekavf.vinotekaapp.services.StorageService;
 import ru.vinotekavf.vinotekaapp.utils.ControllerUtils;
 
 import javax.transaction.Transactional;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
@@ -28,6 +27,9 @@ public class ProviderController {
 
     @Autowired
     private ProviderService providerService;
+
+    @Autowired
+    private StorageService storageService;
 
     @GetMapping("providers/{provider}")
     public String editPositions(@PathVariable Provider provider, Model model) {
@@ -46,7 +48,7 @@ public class ProviderController {
                                 @RequestParam("volume") String volume,
                                 @RequestParam("releaseYear") String releaseYear,
                                 @RequestParam("maker") String maker
-    ) throws IOException {
+    )  {
 
         if (isNotEmpty(file)) {
 
@@ -59,17 +61,16 @@ public class ProviderController {
             Integer[] releaseYearCols = ControllerUtils.getIntCols(releaseYear);
             Integer[] makerCols = ControllerUtils.getIntCols(maker);
 
-            Path path = ControllerUtils.writeInDirectoryAndGetPath(file, uploadPath);
+            File convertedFile = storageService.convertMultipartFile(file);
 
-            file.transferTo(new File(uploadPath + "/" + file.getOriginalFilename()));
-            if (file.getOriginalFilename().contains("xlsx") || file.getOriginalFilename().contains("xlsm")) {
-                positionService.readXLSXAndWriteInDb(path.toString(), provider, vendorCode, productName, volume, releaseYear, price, promotionalPrice,
+            if (convertedFile.getName().contains("xlsx") || convertedFile.getName().contains("xlsm")) {
+                positionService.readXLSXAndWriteInDb(convertedFile, provider, vendorCode, productName, volume, releaseYear, price, promotionalPrice,
                         remainder, maker);
-            } else if (file.getOriginalFilename().contains("xls")) {
-                positionService.readXLSAndWriteInDb(path.toString(), provider, vendorCode, productName, volume, releaseYear, price, promotionalPrice,
+            } else if (convertedFile.getName().contains("xls")) {
+                positionService.readXLSAndWriteInDb(convertedFile, provider, vendorCode, productName, volume, releaseYear, price, promotionalPrice,
                         remainder, maker);
-            } else if (file.getOriginalFilename().contains(".csv")) {
-                positionService.readCSVAndWriteInDb(path.toString(), "windows-1251", provider,
+            } else if (convertedFile.getName().contains(".csv")) {
+                positionService.readCSVAndWriteInDb(convertedFile, "windows-1251", provider,
                         vendorCodeCols, productNameCols, volumeCols, releaseYearCols, priceCols, promotionalPriceCols, remainderCols, makerCols);
             }
         }
@@ -91,7 +92,8 @@ public class ProviderController {
     @GetMapping("providers/allPositions/{provider}")
     public String getProviderPositions(@PathVariable Provider provider, Model model) {
         model.addAttribute("positions", positionService.findAllByProvider(provider));
-        return "searchPosition";
+        model.addAttribute("provider", provider);
+        return "providerPositions";
     }
 
     @GetMapping("/newProvider")

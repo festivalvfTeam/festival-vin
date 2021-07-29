@@ -41,12 +41,11 @@ public class StorageService {
         S3Object s3Object = s3Client.getObject(bucketName, filename);
         S3ObjectInputStream inputStream = s3Object.getObjectContent();
         try {
-            byte[] content = IOUtils.toByteArray(inputStream);
-            return content;
+            return IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
-        return null;
+        return new byte[0];
     }
 
     public String deleteFile(String file) {
@@ -54,7 +53,7 @@ public class StorageService {
         return file + " deleted";
     }
 
-    private File convertMultipartFile(MultipartFile file) {
+    public File convertMultipartFile(MultipartFile file) {
         File convertedFile = new File(file.getOriginalFilename());
         try (FileOutputStream fos = new FileOutputStream(convertedFile)) {
             fos.write(file.getBytes());

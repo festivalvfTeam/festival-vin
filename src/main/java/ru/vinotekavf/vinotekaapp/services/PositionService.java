@@ -114,9 +114,9 @@ public class PositionService {
         return strategy;
     }
 
-    public void readCSVAndWriteInDb(String csvFilename, String encoding, Provider provider, Integer[] vendorCodeIndexes, Integer[] productNameIndexes, Integer[] volumeIndexes,
+    public void readCSVAndWriteInDb(File file, String encoding, Provider provider, Integer[] vendorCodeIndexes, Integer[] productNameIndexes, Integer[] volumeIndexes,
                                     Integer[] releaseYearIndexes, Integer[] priceIndexes, Integer[] promotionalPriceIndexes, Integer[] remainderIndexes, Integer[] makerIndexes) {
-        try (CSVReader csvReader = new CSVReader(new FileReader(csvFilename, Charset.forName(encoding)), ';', '\n', '"')) {
+        try (CSVReader csvReader = new CSVReader(new FileReader(file, Charset.forName(encoding)), ';', '\n', '"')) {
             String[] currentRow = csvReader.readNext();
             while (currentRow != null) {
                 Position position = new Position();
@@ -167,9 +167,9 @@ public class PositionService {
         }
     }
 
-    public void readXLSXAndWriteInDb(String filePath, Provider provider, String vendorCode, String productName, String volume, String releaseYear,
+    public void readXLSXAndWriteInDb(File file, Provider provider, String vendorCode, String productName, String volume, String releaseYear,
         String price, String promotionalPrice, String remainder, String maker) {
-        try (XSSFWorkbook book = new XSSFWorkbook(new FileInputStream(filePath))) {
+        try (XSSFWorkbook book = new XSSFWorkbook(new FileInputStream(file))) {
             XSSFSheet sheet = book.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.rowIterator();
             while (rowIterator.hasNext()) {
@@ -198,9 +198,9 @@ public class PositionService {
         }
     }
 
-    public void readXLSAndWriteInDb(String filePath, Provider provider, String vendorCode, String productName, String volume, String releaseYear,
+    public void readXLSAndWriteInDb(File file, Provider provider, String vendorCode, String productName, String volume, String releaseYear,
         String price, String promotionalPrice, String remainder, String maker) {
-        try (HSSFWorkbook book = new HSSFWorkbook(new FileInputStream(filePath))) {
+        try (HSSFWorkbook book = new HSSFWorkbook(new FileInputStream(file))) {
             HSSFSheet sheet = book.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.rowIterator();
             while (rowIterator.hasNext()) {
@@ -229,7 +229,11 @@ public class PositionService {
         }
     }
 
-    public List<Position> findByVendorCode(String vendorCode) {
-        return positionRepository.findAllByVendorCode(vendorCode);
+    public List<Position> findByFilter(String query) {
+        return positionRepository.findByQuery(query);
+    }
+
+    public List<Position> findByFilterWithProvider(String query, Provider provider) {
+        return positionRepository.findByQueryAndProvider(query, provider);
     }
 }
