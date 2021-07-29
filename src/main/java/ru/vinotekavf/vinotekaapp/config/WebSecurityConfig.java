@@ -22,10 +22,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder(8);
     }
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
@@ -48,6 +44,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     protected void configure(AuthenticationManagerBuilder auth, UserService userService) throws Exception {
         auth.userDetailsService(userService)
-            .passwordEncoder(passwordEncoder);
+            .passwordEncoder(getPasswordEncoder());
     }
 }
