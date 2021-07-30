@@ -19,8 +19,6 @@ import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 @Controller
 public class ProviderController {
-    @Value("${upload.path}")
-    private String uploadPath;
 
     @Autowired
     private PositionService positionService;
@@ -34,6 +32,14 @@ public class ProviderController {
     @GetMapping("providers/{provider}")
     public String editPositions(@PathVariable Provider provider, Model model) {
         model.addAttribute("provider", provider);
+        model.addAttribute("productNameCols", provider.getProductNameCols());
+        model.addAttribute("vendorCodeCols", provider.getVendorCodeCols());
+        model.addAttribute("priceCols", provider.getPriceCols());
+        model.addAttribute("promotionalPriceCols", provider.getPromotionalPriceCols());
+        model.addAttribute("remainderCols", provider.getRemainderCols());
+        model.addAttribute("volumeCols", provider.getVolumeCols());
+        model.addAttribute("releaseYearCols", provider.getReleaseYearCols());
+        model.addAttribute("makerCols", provider.getMakerCols());
         return "matchPositions";
     }
 
@@ -47,10 +53,31 @@ public class ProviderController {
                                 @RequestParam("remainder") String remainder,
                                 @RequestParam("volume") String volume,
                                 @RequestParam("releaseYear") String releaseYear,
-                                @RequestParam("maker") String maker
+                                @RequestParam("maker") String maker,
+                                Model model
     )  {
 
         if (isNotEmpty(file)) {
+            model.addAttribute("provider", provider);
+            model.addAttribute("productNameCols", provider.getProductNameCols());
+            model.addAttribute("vendorCodeCols", provider.getVendorCodeCols());
+            model.addAttribute("priceCols", provider.getPriceCols());
+            model.addAttribute("promotionalPriceCols", provider.getPromotionalPriceCols());
+            model.addAttribute("remainderCols", provider.getRemainderCols());
+            model.addAttribute("volumeCols", provider.getVolumeCols());
+            model.addAttribute("releaseYearCols", provider.getReleaseYearCols());
+            model.addAttribute("makerCols", provider.getMakerCols());
+
+            Provider providerFromDB = providerService.getProviderById(provider.getId());
+            providerFromDB.setProductNameCols(productName);
+            providerFromDB.setVendorCodeCols(vendorCode);
+            providerFromDB.setPriceCols(price);
+            providerFromDB.setPromotionalPriceCols(promotionalPrice);
+            providerFromDB.setRemainderCols(remainder);
+            providerFromDB.setVolumeCols(volume);
+            providerFromDB.setReleaseYearCols(releaseYear);
+            providerFromDB.setMakerCols(maker);
+            providerService.save(providerFromDB);
 
             Integer[] productNameCols = ControllerUtils.getIntCols(productName);
             Integer[] vendorCodeCols = ControllerUtils.getIntCols(vendorCode);
@@ -78,7 +105,7 @@ public class ProviderController {
     }
 
     @PostMapping("providers/changeStatus")
-    public String deleteProvider(@RequestParam Long providerId, Model model) {
+    public String removeProvider(@RequestParam Long providerId, Model model) {
         Provider provider = providerService.changeProviderStatus(providerId);
         if (!provider.isActive()) {
             model.addAttribute("providers", providerService.getAllActive());

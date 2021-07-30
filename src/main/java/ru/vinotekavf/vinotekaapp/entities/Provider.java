@@ -2,6 +2,7 @@ package ru.vinotekavf.vinotekaapp.entities;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -21,6 +22,16 @@ public class Provider {
     private String phone;
     private String managerName;
     private boolean isActive;
+
+    //поля запоминающие колонки файлов
+    private String productNameCols;
+    private String vendorCodeCols;
+    private String priceCols;
+    private String promotionalPriceCols;
+    private String remainderCols;
+    private String volumeCols;
+    private String releaseYearCols;
+    private String makerCols;
 
     public Provider() {
         isActive = true;
