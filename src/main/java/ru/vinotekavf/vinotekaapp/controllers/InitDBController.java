@@ -66,7 +66,7 @@ public class InitDBController {
             if (file.getOriginalFilename().contains("xlsx") || file.getOriginalFilename().contains("xlsm")) {
                 Workbook workbook = StreamingReader.builder()
                     .rowCacheSize(100)
-                    .bufferSize(4096)
+                    .bufferSize(2048)
                     .open(storageService.uploadMultipartFile(file));
 
                 Sheet sheet = workbook.getSheetAt(0);
