@@ -4,14 +4,13 @@ import com.ibm.icu.text.Transliterator;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import ru.vinotekavf.vinotekaapp.entities.Position;
 import ru.vinotekavf.vinotekaapp.entities.Provider;
 import ru.vinotekavf.vinotekaapp.enums.ExcelColumns;
-import ru.vinotekavf.vinotekaapp.services.StorageService;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,7 +23,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.poi.ss.usermodel.Cell.*;
+import static org.apache.poi.ss.usermodel.CellType.*;
 
 public class FileUtils {
 
@@ -48,6 +47,32 @@ public class FileUtils {
         return cell;
     }
 
+    public static String getValueFromXLSXCommonPrice(String column, Row row) {
+
+            if (isNotBlank(column)) {
+                Cell cell = row.getCell(ExcelColumns.valueOf(column.toUpperCase()).ordinal());
+                if (isNotEmpty(cell)) {
+                    if (isNotEmpty(cell) && cell.getCellType() == STRING) {
+                        return cell.getStringCellValue().replaceAll("\\s+", " ");
+                    } else if (isNotEmpty(cell) && cell.getCellType() == NUMERIC) {
+                        return BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
+                    } else if (isNotEmpty(cell) && cell.getCellType() == FORMULA) {
+                        switch (cell.getCachedFormulaResultType()) {
+                            case STRING:
+                                return cell.getRichStringCellValue().getString();
+                            case NUMERIC:
+                                return BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
+                            default:
+                                return "";
+                        }
+                    } else {
+                        return "";
+                    }
+                }
+            }
+        return "";
+    }
+
     public static String getValueFromXLSXColumn(String column, XSSFRow row) {
         String[] columns = column.split(",");
 
@@ -55,16 +80,16 @@ public class FileUtils {
             if (isNotBlank(str)) {
                 XSSFCell cell = row.getCell(ExcelColumns.valueOf(str.toUpperCase()).ordinal());
                 if (isNotEmpty(cell)) {
-                    XSSFCell cellWithValue = getValuableXSSFCellFromMerged(row.getSheet(), cell);
-                    if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_STRING) {
+                    Cell cellWithValue = getValuableXSSFCellFromMerged(row.getSheet(), cell);
+                    if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == STRING) {
                         return cellWithValue.getStringCellValue().replaceAll("\\s+", " ");
-                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_NUMERIC) {
+                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == NUMERIC) {
                         return BigDecimal.valueOf(cellWithValue.getNumericCellValue()).stripTrailingZeros().toPlainString();
-                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_FORMULA) {
+                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == FORMULA) {
                         switch (cellWithValue.getCachedFormulaResultType()) {
-                            case CELL_TYPE_STRING:
+                            case STRING:
                                 return cellWithValue.getRichStringCellValue().getString();
-                            case CELL_TYPE_NUMERIC:
+                            case NUMERIC:
                                 return BigDecimal.valueOf(cellWithValue.getNumericCellValue()).stripTrailingZeros().toPlainString();
                             default:
                                 return "";
@@ -85,16 +110,16 @@ public class FileUtils {
             if (isNotBlank(str)) {
                 HSSFCell cell = row.getCell(ExcelColumns.valueOf(str.toUpperCase()).ordinal());
                 if (isNotEmpty(cell)) {
-                    HSSFCell cellWithValue = getValuableHSSFCellFromMerged(row.getSheet(), cell);
-                    if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_STRING) {
+                    Cell cellWithValue = getValuableHSSFCellFromMerged(row.getSheet(), cell);
+                    if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == STRING) {
                         return cellWithValue.getStringCellValue().replaceAll("\\s+", " ");
-                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_NUMERIC) {
+                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == NUMERIC) {
                         return BigDecimal.valueOf(cellWithValue.getNumericCellValue()).stripTrailingZeros().toPlainString();
-                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == CELL_TYPE_FORMULA) {
+                    } else if (isNotEmpty(cellWithValue) && cellWithValue.getCellType() == FORMULA) {
                         switch (cellWithValue.getCachedFormulaResultType()) {
-                            case CELL_TYPE_STRING:
+                            case STRING:
                                 return cellWithValue.getRichStringCellValue().getString();
-                            case CELL_TYPE_NUMERIC:
+                            case NUMERIC:
                                 return BigDecimal.valueOf(cellWithValue.getNumericCellValue()).stripTrailingZeros().toPlainString();
                             default:
                                 return "";

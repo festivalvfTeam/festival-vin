@@ -1,7 +1,11 @@
 package ru.vinotekavf.vinotekaapp.controllers;
 
+import com.monitorjbl.xlsx.StreamingReader;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -60,7 +64,43 @@ public class InitDBController {
         if (isNotEmpty(file.getOriginalFilename())) {
 
             if (file.getOriginalFilename().contains("xlsx") || file.getOriginalFilename().contains("xlsm")) {
-                XSSFWorkbook book = new XSSFWorkbook(storageService.uploadMultipartFile(file));
+                Workbook workbook = StreamingReader.builder()
+                    .rowCacheSize(100)
+                    .bufferSize(4096)
+                    .open(storageService.uploadMultipartFile(file));
+
+                Sheet sheet = workbook.getSheetAt(0);
+
+                for (Row row : sheet) {
+                    Provider curProvider = new Provider();
+                    Position position = new Position();
+
+                    curProvider.setName(FileUtils.getValueFromXLSXCommonPrice(provider, row));
+                    if (curProvider.getName().isEmpty() || curProvider.getName().equals("Название компании")) {
+                        continue;
+                    }
+                    curProvider.setPhone(FileUtils.getValueFromXLSXCommonPrice(phone, row));
+                    curProvider.setManagerName(FileUtils.getValueFromXLSXCommonPrice(managerName, row));
+
+                    position.setProductName(FileUtils.getValueFromXLSXCommonPrice(productName, row));
+                    position.setVendorCode(FileUtils.getValueFromXLSXCommonPrice(vendorCode, row));
+                    position.setPrice(FileUtils.getValueFromXLSXCommonPrice(price, row));
+                    position.setPromotionalPrice(FileUtils.getValueFromXLSXCommonPrice(promotionalPrice, row));
+                    position.setRemainder(FileUtils.getValueFromXLSXCommonPrice(remainder, row));
+                    position.setVolume(FileUtils.getValueFromXLSXCommonPrice(volume, row));
+                    position.setReleaseYear(FileUtils.getValueFromXLSXCommonPrice(releaseYear, row));
+                    position.setMaker(FileUtils.getValueFromXLSXCommonPrice(maker, row));
+                    position.setFvProductName(FileUtils.getValueFromXLSXCommonPrice(fvProductName, row));
+                    position.setFvVendorCode(FileUtils.getValueFromXLSXCommonPrice(fvVendorCode, row));
+                    position.setLastChange(Calendar.getInstance().getTimeInMillis());
+
+                    providerService.save(curProvider);
+                    Provider provider1 = providerService.getProviderByName(curProvider.getName());
+                    position.setProvider(provider1);
+                    positionService.save(position);
+                }
+                workbook.close();
+                /*XSSFWorkbook book = new XSSFWorkbook(storageService.uploadMultipartFile(file));
                 XSSFSheet sheet = book.getSheetAt(0);
                 Iterator<Row> rowIterator = sheet.rowIterator();
                 while (rowIterator.hasNext()) {
@@ -92,7 +132,7 @@ public class InitDBController {
                     position.setProvider(provider1);
                     positionService.save(position);
                 }
-                book.close();
+                book.close();*/
             }
         }
         return "redirect:/";

@@ -51,7 +51,7 @@ public class PositionService {
         positionList.sort(Comparator.comparing(Position::getLastChange));
         Long curTime = Calendar.getInstance().getTimeInMillis();
 
-         if (!positionList.isEmpty() && curTime - positionList.get(0).getLastChange() > 60000) {
+         if (!positionList.isEmpty() && curTime - positionList.get(0).getLastChange() > 300000) {
              Position positionFromDb = positionList.get(0);
 
             positionFromDb.setVendorCode(position.getVendorCode());
@@ -153,6 +153,8 @@ public class PositionService {
                     if (index != -1)
                         position.addMaker(currentRow[index]);
                 }
+
+                position.setLastChange(Calendar.getInstance().getTimeInMillis());
 
                 if (!position.getPrice().isEmpty() && !position.getProductName().isEmpty() && NumberUtils.isParsable(position.getPrice().replaceAll("\\s+","")))
                     save(position);
