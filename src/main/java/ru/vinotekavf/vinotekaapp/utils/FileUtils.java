@@ -59,7 +59,7 @@ public class FileUtils {
                     } else if (isNotEmpty(cell) && cell.getCellType() == FORMULA) {
                         switch (cell.getCachedFormulaResultType()) {
                             case STRING:
-                                return cell.getRichStringCellValue().getString();
+                                return cell.getStringCellValue();
                             case NUMERIC:
                                 return BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
                             default:

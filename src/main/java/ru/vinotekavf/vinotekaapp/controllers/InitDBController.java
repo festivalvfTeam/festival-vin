@@ -70,11 +70,10 @@ public class InitDBController {
                     .open(storageService.uploadMultipartFile(file));
 
                 Sheet sheet = workbook.getSheetAt(0);
+                Provider curProvider = new Provider();
+                Position position = new Position();
 
                 for (Row row : sheet) {
-                    Provider curProvider = new Provider();
-                    Position position = new Position();
-
                     curProvider.setName(FileUtils.getValueFromXLSXCommonPrice(provider, row));
                     if (curProvider.getName().isEmpty() || curProvider.getName().equals("Название компании")) {
                         continue;
@@ -98,7 +97,16 @@ public class InitDBController {
                     Provider provider1 = providerService.getProviderByName(curProvider.getName());
                     position.setProvider(provider1);
                     positionService.save(position);
+                    curProvider = new Provider();
+                    position = new Position();
                 }
+                Runtime runtime = Runtime.getRuntime();
+                // Run the garbage collector
+                runtime.gc();
+                // Calculate the used memory
+                long memory = runtime.totalMemory() - runtime.freeMemory();
+                System.out.println("Used memory is bytes: " + memory);
+
                 workbook.close();
                 /*XSSFWorkbook book = new XSSFWorkbook(storageService.uploadMultipartFile(file));
                 XSSFSheet sheet = book.getSheetAt(0);

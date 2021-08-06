@@ -21,6 +21,7 @@ public class Position {
     private boolean isActive;
 
     private String vendorCode;//артикул
+    @Column(length = 450)
     private String productName;
     private String volume;//объем
     private String releaseYear;
@@ -32,6 +33,7 @@ public class Position {
 
     //артикул в Festival Vin
     private String fvVendorCode;
+    @Column(length = 450)
     private String fvProductName;
 
     public Position() {

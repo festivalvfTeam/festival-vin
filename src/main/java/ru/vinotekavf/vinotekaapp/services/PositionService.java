@@ -51,7 +51,7 @@ public class PositionService {
         positionList.sort(Comparator.comparing(Position::getLastChange));
         Long curTime = Calendar.getInstance().getTimeInMillis();
 
-         if (!positionList.isEmpty() && curTime - positionList.get(0).getLastChange() > 300000) {
+         if (!positionList.isEmpty() && curTime - positionList.get(0).getLastChange() > 900000) {
              Position positionFromDb = positionList.get(0);
 
             positionFromDb.setVendorCode(position.getVendorCode());
