@@ -46,27 +46,11 @@ public class PositionService {
             "join posit po on pr.id = po.provider_id";
 
     public void save(Position position) {
-        List<Position> positionList = positionRepository.findPositionList(position.getProvider(), position.getVendorCode(), position.getProductName(),
-            position.getVolume(), position.getReleaseYear());
-        positionList.sort(Comparator.comparing(Position::getLastChange));
-        Long curTime = Calendar.getInstance().getTimeInMillis();
+        positionRepository.save(position);
+    }
 
-         if (!positionList.isEmpty() && curTime - positionList.get(0).getLastChange() > 900000) {
-             Position positionFromDb = positionList.get(0);
-
-            positionFromDb.setVendorCode(position.getVendorCode());
-            positionFromDb.setProductName(position.getProductName());
-            positionFromDb.setVolume(position.getVolume());
-            positionFromDb.setReleaseYear(position.getReleaseYear());
-            positionFromDb.setPrice(position.getPrice());
-            positionFromDb.setPromotionalPrice(position.getPromotionalPrice());
-            positionFromDb.setRemainder(position.getRemainder());
-            positionFromDb.setMaker(position.getMaker());
-            positionFromDb.setLastChange(Calendar.getInstance().getTimeInMillis());
-            positionRepository.save(positionFromDb);
-        } else {
-            positionRepository.save(position);
-        }
+    public void saveAll(List<Position> positions) {
+        positionRepository.saveAll(positions);
     }
 
     public List<Position> findAll() {
@@ -116,6 +100,7 @@ public class PositionService {
 
     public void readCSVAndWriteInDb(File file, String encoding, Provider provider, Integer[] vendorCodeIndexes, Integer[] productNameIndexes, Integer[] volumeIndexes,
                                     Integer[] releaseYearIndexes, Integer[] priceIndexes, Integer[] promotionalPriceIndexes, Integer[] remainderIndexes, Integer[] makerIndexes) {
+        List<Position> positionList = new ArrayList<>();
         try (CSVReader csvReader = new CSVReader(new FileReader(file, Charset.forName(encoding)), ';', '\n', '"')) {
             String[] currentRow = csvReader.readNext();
             while (currentRow != null) {
@@ -156,21 +141,25 @@ public class PositionService {
 
                 position.setLastChange(Calendar.getInstance().getTimeInMillis());
 
+
+
                 if (!position.getPrice().isEmpty() && !position.getProductName().isEmpty() && NumberUtils.isParsable(position.getPrice().replaceAll("\\s+","")))
-                    save(position);
+                    positionList.add(position);
 
                 currentRow = csvReader.readNext();
             }
+            positionRepository.saveAll(positionList);
         } catch (FileNotFoundException exception) {
             logger.info("File not found");
             logger.error(exception.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     public void readXLSXAndWriteInDb(File file, Provider provider, String vendorCode, String productName, String volume, String releaseYear,
         String price, String promotionalPrice, String remainder, String maker) {
+        List<Position> positionList = new ArrayList<>();
         try (XSSFWorkbook book = new XSSFWorkbook(new FileInputStream(file))) {
             XSSFSheet sheet = book.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.rowIterator();
@@ -190,18 +179,20 @@ public class PositionService {
                 position.setLastChange(Calendar.getInstance().getTimeInMillis());
 
                 if (!position.getPrice().isEmpty() && !position.getProductName().isEmpty() && NumberUtils.isParsable(position.getPrice().replaceAll("\\s+","")))
-                    save(position);
+                    positionList.add(position);
             }
+            positionRepository.saveAll(positionList);
         } catch (FileNotFoundException exception) {
             logger.info("File not found");
             logger.error(exception.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     public void readXLSAndWriteInDb(File file, Provider provider, String vendorCode, String productName, String volume, String releaseYear,
         String price, String promotionalPrice, String remainder, String maker) {
+        List<Position> positionList = new ArrayList<>();
         try (HSSFWorkbook book = new HSSFWorkbook(new FileInputStream(file))) {
             HSSFSheet sheet = book.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.rowIterator();
@@ -221,13 +212,14 @@ public class PositionService {
                 position.setLastChange(Calendar.getInstance().getTimeInMillis());
 
                 if (!position.getPrice().isEmpty() && !position.getProductName().isEmpty() && NumberUtils.isParsable(position.getPrice().replaceAll("\\s+","")))
-                    save(position);
+                    positionList.add(position);
             }
+            positionRepository.saveAll(positionList);
         } catch (FileNotFoundException exception) {
             logger.info("File not found");
             logger.error(exception.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 

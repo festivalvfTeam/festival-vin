@@ -1,14 +1,10 @@
 package ru.vinotekavf.vinotekaapp.controllers;
 
 import com.monitorjbl.xlsx.StreamingReader;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -21,13 +17,14 @@ import ru.vinotekavf.vinotekaapp.entities.Provider;
 import ru.vinotekavf.vinotekaapp.services.PositionService;
 import ru.vinotekavf.vinotekaapp.services.ProviderService;
 import ru.vinotekavf.vinotekaapp.services.StorageService;
-import ru.vinotekavf.vinotekaapp.utils.FileUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
+import java.util.List;
 
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
+import static ru.vinotekavf.vinotekaapp.utils.FileUtils.getValueFromXLSXCommonPrice;
 
 @Controller
 public class InitDBController {
@@ -59,9 +56,11 @@ public class InitDBController {
         @RequestParam("maker") String maker,
         @RequestParam("fvVendorCode") String fvVendorCode,
         @RequestParam("fvProductName") String fvProductName
-    ) throws IOException, InvalidFormatException {
+    ) throws IOException {
 
         if (isNotEmpty(file.getOriginalFilename())) {
+
+            List<Position> positionList = new ArrayList<>();
 
             if (file.getOriginalFilename().contains("xlsx") || file.getOriginalFilename().contains("xlsm")) {
                 Workbook workbook = StreamingReader.builder()
@@ -74,73 +73,39 @@ public class InitDBController {
                 Position position = new Position();
 
                 for (Row row : sheet) {
-                    curProvider.setName(FileUtils.getValueFromXLSXCommonPrice(provider, row));
-                    if (curProvider.getName().isEmpty() || curProvider.getName().equals("Название компании")) {
+
+                    if (getValueFromXLSXCommonPrice(provider, row).isEmpty() ||
+                        getValueFromXLSXCommonPrice(provider, row).equals("Название компании")) {
                         continue;
                     }
-                    curProvider.setPhone(FileUtils.getValueFromXLSXCommonPrice(phone, row));
-                    curProvider.setManagerName(FileUtils.getValueFromXLSXCommonPrice(managerName, row));
 
-                    position.setProductName(FileUtils.getValueFromXLSXCommonPrice(productName, row));
-                    position.setVendorCode(FileUtils.getValueFromXLSXCommonPrice(vendorCode, row));
-                    position.setPrice(FileUtils.getValueFromXLSXCommonPrice(price, row));
-                    position.setPromotionalPrice(FileUtils.getValueFromXLSXCommonPrice(promotionalPrice, row));
-                    position.setRemainder(FileUtils.getValueFromXLSXCommonPrice(remainder, row));
-                    position.setVolume(FileUtils.getValueFromXLSXCommonPrice(volume, row));
-                    position.setReleaseYear(FileUtils.getValueFromXLSXCommonPrice(releaseYear, row));
-                    position.setMaker(FileUtils.getValueFromXLSXCommonPrice(maker, row));
-                    position.setFvProductName(FileUtils.getValueFromXLSXCommonPrice(fvProductName, row));
-                    position.setFvVendorCode(FileUtils.getValueFromXLSXCommonPrice(fvVendorCode, row));
+                    if (ObjectUtils.isEmpty(providerService.getProviderByName(getValueFromXLSXCommonPrice(provider, row)))) {
+                        curProvider.setName(getValueFromXLSXCommonPrice(provider, row));
+                        providerService.save(curProvider);
+                    } else {
+                        curProvider = providerService.getProviderByName(getValueFromXLSXCommonPrice(provider, row));
+                    }
+
+                    position.setProductName(getValueFromXLSXCommonPrice(productName, row));
+                    position.setVendorCode(getValueFromXLSXCommonPrice(vendorCode, row));
+                    position.setPrice(getValueFromXLSXCommonPrice(price, row));
+                    position.setPromotionalPrice(getValueFromXLSXCommonPrice(promotionalPrice, row));
+                    position.setRemainder(getValueFromXLSXCommonPrice(remainder, row));
+                    position.setVolume(getValueFromXLSXCommonPrice(volume, row));
+                    position.setReleaseYear(getValueFromXLSXCommonPrice(releaseYear, row));
+                    position.setMaker(getValueFromXLSXCommonPrice(maker, row));
+                    position.setFvProductName(getValueFromXLSXCommonPrice(fvProductName, row));
+                    position.setFvVendorCode(getValueFromXLSXCommonPrice(fvVendorCode, row));
                     position.setLastChange(Calendar.getInstance().getTimeInMillis());
 
-                    providerService.save(curProvider);
                     Provider provider1 = providerService.getProviderByName(curProvider.getName());
                     position.setProvider(provider1);
-                    positionService.save(position);
+                    positionList.add(position);
                     curProvider = new Provider();
                     position = new Position();
                 }
-                Runtime runtime = Runtime.getRuntime();
-                // Run the garbage collector
-                runtime.gc();
-                // Calculate the used memory
-                long memory = runtime.totalMemory() - runtime.freeMemory();
-                System.out.println("Used memory is bytes: " + memory);
-
+                positionService.saveAll(positionList);
                 workbook.close();
-                /*XSSFWorkbook book = new XSSFWorkbook(storageService.uploadMultipartFile(file));
-                XSSFSheet sheet = book.getSheetAt(0);
-                Iterator<Row> rowIterator = sheet.rowIterator();
-                while (rowIterator.hasNext()) {
-                    XSSFRow row = (XSSFRow) rowIterator.next();
-                    Provider curProvider = new Provider();
-                    Position position = new Position();
-
-                    curProvider.setName(FileUtils.getValueFromXLSXColumn(provider, row));
-                    if (curProvider.getName().isEmpty() || curProvider.getName().equals("Название компании")) {
-                        continue;
-                    }
-                    curProvider.setPhone(FileUtils.getValueFromXLSXColumn(phone, row));
-                    curProvider.setManagerName(FileUtils.getValueFromXLSXColumn(managerName, row));
-
-                    position.setProductName(FileUtils.getValueFromXLSXColumn(productName, row));
-                    position.setVendorCode(FileUtils.getValueFromXLSXColumn(vendorCode, row));
-                    position.setPrice(FileUtils.getValueFromXLSXColumn(price, row));
-                    position.setPromotionalPrice(FileUtils.getValueFromXLSXColumn(promotionalPrice, row));
-                    position.setRemainder(FileUtils.getValueFromXLSXColumn(remainder, row));
-                    position.setVolume(FileUtils.getValueFromXLSXColumn(volume, row));
-                    position.setReleaseYear(FileUtils.getValueFromXLSXColumn(releaseYear, row));
-                    position.setMaker(FileUtils.getValueFromXLSXColumn(maker, row));
-                    position.setFvProductName(FileUtils.getValueFromXLSXColumn(fvProductName, row));
-                    position.setFvVendorCode(FileUtils.getValueFromXLSXColumn(fvVendorCode, row));
-                    position.setLastChange(Calendar.getInstance().getTimeInMillis());
-
-                    providerService.save(curProvider);
-                    Provider provider1 = providerService.getProviderByName(curProvider.getName());
-                    position.setProvider(provider1);
-                    positionService.save(position);
-                }
-                book.close();*/
             }
         }
         return "redirect:/";

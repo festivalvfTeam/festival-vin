@@ -1,11 +1,16 @@
 package ru.vinotekavf.vinotekaapp.utils;
 
 import com.ibm.icu.text.Transliterator;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import ru.vinotekavf.vinotekaapp.entities.Position;
@@ -13,6 +18,7 @@ import ru.vinotekavf.vinotekaapp.entities.Provider;
 import ru.vinotekavf.vinotekaapp.enums.ExcelColumns;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -131,6 +137,73 @@ public class FileUtils {
             }
         }
         return "";
+    }
+
+    public static File xlsxToCsv(File excel, File csv) {
+        StringBuilder data = new StringBuilder();
+
+        try (FileOutputStream fos = new FileOutputStream(csv);
+             FileInputStream fis = new FileInputStream(excel)){
+
+            Workbook workbook = null;
+
+            String ext = FilenameUtils.getExtension(excel.getName());
+
+            if (ext.equalsIgnoreCase("xlsx")) {
+                workbook = new XSSFWorkbook(fis);
+            } else if (ext.equalsIgnoreCase("xls")) {
+                workbook = new HSSFWorkbook(fis);
+            }
+
+            Row row;
+            Cell cell;
+
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for (Row cells : sheet) {
+                row = cells;
+                for (int i = 0; i < sheet.getRow(0).getLastCellNum(); i++) {
+                    cell = row.getCell(i);
+                    if (ObjectUtils.isNotEmpty(cell)) {
+                        switch (cell.getCellType()) {
+                            case BOOLEAN:
+                                data.append(cell.getBooleanCellValue()).append(";");
+                                break;
+                            case NUMERIC:
+                                data.append(BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString()).append(";");
+                                break;
+                            case STRING:
+                                data.append(cell.getStringCellValue().replaceAll("\\s+", " ")).append(";");
+                                break;
+                            case BLANK:
+                                data.append("" + ";");
+                                break;
+                            case FORMULA:
+                                switch (cell.getCachedFormulaResultType()) {
+                                    case STRING:
+                                        data.append(cell.getStringCellValue().replaceAll("\\s+", " ")).append(";");
+                                        break;
+                                    case NUMERIC:
+                                        data.append(BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString()).append(";");
+                                        break;
+                                    default:
+                                        data.append(cell).append(";");
+                                }
+                                break;
+                            default:
+                                data.append(cell).append(";");
+                        }
+                    } else {
+                        data.append(";");
+                    }
+                }
+                data.append('\n');
+            }
+            fos.write(data.toString().getBytes());
+        } catch (Exception ioe) {
+            ioe.printStackTrace();
+        }
+        return csv;
     }
 
     public File writeAllToXLSXFile(List<Provider> providers) throws IOException {
