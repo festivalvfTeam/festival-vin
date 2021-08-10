@@ -2,6 +2,7 @@ package ru.vinotekavf.vinotekaapp.controllers;
 
 import com.monitorjbl.xlsx.StreamingReader;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -24,13 +25,16 @@ import java.util.Calendar;
 import java.util.List;
 
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
-import static ru.vinotekavf.vinotekaapp.utils.FileUtils.getValueFromXLSXCommonPrice;
+import static ru.vinotekavf.vinotekaapp.utils.FileUtils.getValueFromCommonPrice;
 
 @Controller
 public class InitDBController {
 
     @Value("${upload.path}")
     private String uploadPath;
+
+    @Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
+    private int batchSize;
 
     @Autowired
     ProviderService providerService;
@@ -62,51 +66,51 @@ public class InitDBController {
 
             List<Position> positionList = new ArrayList<>();
 
-            if (file.getOriginalFilename().contains("xlsx") || file.getOriginalFilename().contains("xlsm")) {
-                Workbook workbook = StreamingReader.builder()
-                    .rowCacheSize(100)
-                    .bufferSize(2048)
-                    .open(storageService.uploadMultipartFile(file));
+            Workbook workbook = StreamingReader.builder()
+                .rowCacheSize(100)
+                .bufferSize(2048)
+                .open(storageService.uploadMultipartFile(file));
 
-                Sheet sheet = workbook.getSheetAt(0);
-                Provider curProvider = new Provider();
-                Position position = new Position();
+            Sheet sheet = workbook.getSheetAt(0);
+            Provider curProvider = new Provider();
+            Position position = new Position();
 
-                for (Row row : sheet) {
+            for (Row row : sheet) {
 
-                    if (getValueFromXLSXCommonPrice(provider, row).isEmpty() ||
-                        getValueFromXLSXCommonPrice(provider, row).equals("Название компании")) {
-                        continue;
-                    }
-
-                    if (ObjectUtils.isEmpty(providerService.getProviderByName(getValueFromXLSXCommonPrice(provider, row)))) {
-                        curProvider.setName(getValueFromXLSXCommonPrice(provider, row));
-                        providerService.save(curProvider);
-                    } else {
-                        curProvider = providerService.getProviderByName(getValueFromXLSXCommonPrice(provider, row));
-                    }
-
-                    position.setProductName(getValueFromXLSXCommonPrice(productName, row));
-                    position.setVendorCode(getValueFromXLSXCommonPrice(vendorCode, row));
-                    position.setPrice(getValueFromXLSXCommonPrice(price, row));
-                    position.setPromotionalPrice(getValueFromXLSXCommonPrice(promotionalPrice, row));
-                    position.setRemainder(getValueFromXLSXCommonPrice(remainder, row));
-                    position.setVolume(getValueFromXLSXCommonPrice(volume, row));
-                    position.setReleaseYear(getValueFromXLSXCommonPrice(releaseYear, row));
-                    position.setMaker(getValueFromXLSXCommonPrice(maker, row));
-                    position.setFvProductName(getValueFromXLSXCommonPrice(fvProductName, row));
-                    position.setFvVendorCode(getValueFromXLSXCommonPrice(fvVendorCode, row));
-                    position.setLastChange(Calendar.getInstance().getTimeInMillis());
-
-                    Provider provider1 = providerService.getProviderByName(curProvider.getName());
-                    position.setProvider(provider1);
-                    positionList.add(position);
+                if (getValueFromCommonPrice(provider, row).isEmpty() ||
+                    getValueFromCommonPrice(provider, row).equals("Название компании")) {
+                    continue;
+                } else if (StringUtils.isEmpty(curProvider.getName()) || ObjectUtils.isEmpty(providerService.getProviderByName(getValueFromCommonPrice(provider, row)))) {
                     curProvider = new Provider();
-                    position = new Position();
+                    curProvider.setName(getValueFromCommonPrice(provider, row));
+                    providerService.save(curProvider);
+                } else if (curProvider.getName().equals(getValueFromCommonPrice(provider, row))) {
+                } else {
+                    curProvider = providerService.getProviderByName(getValueFromCommonPrice(provider, row));
                 }
-                positionService.saveAll(positionList);
-                workbook.close();
+
+                position.setProductName(getValueFromCommonPrice(productName, row));
+                position.setVendorCode(getValueFromCommonPrice(vendorCode, row));
+                position.setPrice(getValueFromCommonPrice(price, row));
+                position.setPromotionalPrice(getValueFromCommonPrice(promotionalPrice, row));
+                position.setRemainder(getValueFromCommonPrice(remainder, row));
+                position.setVolume(getValueFromCommonPrice(volume, row));
+                position.setReleaseYear(getValueFromCommonPrice(releaseYear, row));
+                position.setMaker(getValueFromCommonPrice(maker, row));
+                position.setFvProductName(getValueFromCommonPrice(fvProductName, row));
+                position.setFvVendorCode(getValueFromCommonPrice(fvVendorCode, row));
+                position.setLastChange(Calendar.getInstance().getTimeInMillis());
+
+                position.setProvider(curProvider);
+                positionList.add(position);
+                if (!positionList.isEmpty() && positionList.size() % batchSize == 0) {
+                    positionService.saveAll(positionList);
+                    positionList.clear();
+                }
+                position = new Position();
             }
+            positionService.saveAll(positionList);
+            workbook.close();
         }
         return "redirect:/";
     }

@@ -50,7 +50,7 @@ public class PositionService {
     }
 
     public void saveAll(List<Position> positions) {
-        positionRepository.saveAll(positions);
+        positionRepository.saveAllAndFlush(positions);
     }
 
     public List<Position> findAll() {

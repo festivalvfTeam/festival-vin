@@ -53,26 +53,27 @@ public class FileUtils {
         return cell;
     }
 
-    public static String getValueFromXLSXCommonPrice(String column, Row row) {
+    public static String getValueFromCommonPrice(String column, Row row) {
 
             if (isNotBlank(column)) {
                 Cell cell = row.getCell(ExcelColumns.valueOf(column.toUpperCase()).ordinal());
                 if (isNotEmpty(cell)) {
-                    if (isNotEmpty(cell) && cell.getCellType() == STRING) {
-                        return cell.getStringCellValue().replaceAll("\\s+", " ");
-                    } else if (isNotEmpty(cell) && cell.getCellType() == NUMERIC) {
-                        return BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
-                    } else if (isNotEmpty(cell) && cell.getCellType() == FORMULA) {
-                        switch (cell.getCachedFormulaResultType()) {
-                            case STRING:
-                                return cell.getStringCellValue();
-                            case NUMERIC:
-                                return BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
-                            default:
-                                return "";
-                        }
-                    } else {
-                        return "";
+                    switch (cell.getCellType()) {
+                        case STRING:
+                            return cell.getStringCellValue().replaceAll("\\s+", " ");
+                        case NUMERIC:
+                            return BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
+                        case FORMULA:
+                            switch (cell.getCachedFormulaResultType()) {
+                                case STRING:
+                                    return cell.getStringCellValue();
+                                case NUMERIC:
+                                    return BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
+                                default:
+                                    return "";
+                            }
+                        default:
+                            return  "";
                     }
                 }
             }
