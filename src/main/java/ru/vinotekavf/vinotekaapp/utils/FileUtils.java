@@ -7,11 +7,9 @@ import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.*;
 import ru.vinotekavf.vinotekaapp.entities.Position;
 import ru.vinotekavf.vinotekaapp.entities.Provider;
@@ -211,8 +209,8 @@ public class FileUtils {
         File file = new File("files/Common price.xlsx");
         file.getParentFile().mkdirs();
 
-        XSSFWorkbook book = new XSSFWorkbook();
-        XSSFSheet sheet = createXSSFSheet(book);
+        SXSSFWorkbook book = new SXSSFWorkbook(200);
+        Sheet sheet = createXSSFSheet(book);
         createHeader(book, sheet);
         createCells(book, sheet, providers);
         try (FileOutputStream outputStream = new FileOutputStream(file)) {
@@ -229,8 +227,8 @@ public class FileUtils {
 
         List<Provider> providers = new ArrayList<>();
         providers.add(provider);
-        XSSFWorkbook book = new XSSFWorkbook();
-        XSSFSheet sheet = createXSSFSheet(book);
+        SXSSFWorkbook book = new SXSSFWorkbook(200);
+        Sheet sheet = createXSSFSheet(book);
         createHeader(book, sheet);
         createCells(book, sheet, providers);
         try (FileOutputStream outputStream = new FileOutputStream(file)) {
@@ -240,26 +238,26 @@ public class FileUtils {
         return file;
     }
 
-    private static XSSFSheet createXSSFSheet(XSSFWorkbook workbook) {
-        XSSFSheet sheet = workbook.createSheet("Прайсы");
+    private static Sheet createXSSFSheet(SXSSFWorkbook workbook) {
+        Sheet sheet = workbook.createSheet("Прайсы");
         for (int i = 0; i < 13; i++) {
             sheet.setColumnWidth(i, 4000);
         }
         return sheet;
     }
 
-    private static void createHeader(XSSFWorkbook workbook, XSSFSheet sheet) {
-        XSSFRow header = sheet.createRow(0);
+    private static void createHeader(SXSSFWorkbook workbook, Sheet sheet) {
+        Row header = sheet.createRow(0);
 
-        XSSFCellStyle headerStyle = workbook.createCellStyle();
+        CellStyle headerStyle = workbook.createCellStyle();
 
-        XSSFFont font = workbook.createFont();
+        Font font = workbook.createFont();
         font.setFontName("Calibri");
         font.setFontHeightInPoints((short) 11);
         font.setBold(false);
         headerStyle.setFont(font);
 
-        XSSFCell headerCell = header.createCell(0);
+        Cell headerCell = header.createCell(0);
         headerCell.setCellValue("Название");
         headerCell.setCellStyle(headerStyle);
 
@@ -312,8 +310,8 @@ public class FileUtils {
         headerCell.setCellStyle(headerStyle);
     }
 
-    private static void createCells(XSSFWorkbook workbook, XSSFSheet sheet, List<Provider> providers) {
-        XSSFCellStyle style = workbook.createCellStyle();
+    private static void createCells(SXSSFWorkbook workbook, Sheet sheet, List<Provider> providers) {
+        CellStyle style = workbook.createCellStyle();
         style.setWrapText(true);
         int counter = 1;
 
@@ -322,9 +320,9 @@ public class FileUtils {
                 .sorted(Comparator.comparing(Position::getProductName))
                 .collect(Collectors.toList());
             for (Position position : sortedList) {
-                XSSFRow row = sheet.createRow(counter);
+                Row row = sheet.createRow(counter);
 
-                XSSFCell cell = row.createCell(0);
+                Cell cell = row.createCell(0);
                 cell.setCellValue(provider.getName());
                 cell.setCellStyle(style);
 
